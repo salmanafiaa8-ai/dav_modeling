@@ -18,12 +18,10 @@ st.markdown(
     """
     <style>
     .stApp {
-        background-image: url("cih_logo.jpg");
+        background: url("cih_logo.jpg") no-repeat center top;
         background-size: 400px 400px;
-        background-repeat: no-repeat;
-        background-position: center top;
         background-attachment: fixed;
-        opacity: 0.18;
+        opacity: 0.1;  /* rend le logo très discret */
     }
     </style>
     """,
