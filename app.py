@@ -58,32 +58,36 @@ st.write(f"Vous avez choisi : {dav_type}")
 # ==============================
 st.header("3️⃣ Importer vos données DAV")
 st.write("Le fichier doit contenir : Date | Dk" + (" | ik (taux rémunération)" if dav_type=="Compte épargne" else ""))
-
 file = st.file_uploader("Uploader fichier Excel ou CSV", type=["csv","xlsx"])
 df_dav = None
 
 if file is not None:
-    # Lecture du fichier
+    # Lire le fichier
     if file.name.endswith(".csv"):
         df_dav = pd.read_csv(file)
     else:
         df_dav = pd.read_excel(file)
 
-    # 1️⃣ Nettoyage des noms de colonnes : enlever espaces et mettre en minuscules
+    # Normaliser les colonnes
     df_dav.columns = df_dav.columns.str.strip().str.lower()
 
-    # 2️⃣ Vérifier la présence de la colonne date
+    # Vérifier la présence de la colonne date
     if 'date' not in df_dav.columns:
         st.error("Votre fichier doit contenir une colonne 'Date'")
     else:
-        # 3️⃣ Conversion en datetime avec gestion des erreurs
-        df_dav['date'] = pd.to_datetime(df_dav['date'], errors='coerce')
+        # Convertir en datetime avec coercition (dates invalides deviennent NaT)
+        df_dav['date'] = pd.to_datetime(df_dav['date'], dayfirst=True, errors='coerce')
 
-        # 4️⃣ Supprimer les lignes où la date est invalide
+        # Supprimer les lignes avec date invalide
         df_dav = df_dav.dropna(subset=['date']).reset_index(drop=True)
 
-        # 5️⃣ Afficher les 5 premières lignes
+        # Nettoyer la colonne Dk : enlever espaces, transformer en float
+        if 'dk' in df_dav.columns:
+            df_dav['dk'] = df_dav['dk'].astype(str).str.replace(" ", "").str.replace(",", ".").astype(float)
+
+        st.success("Fichier chargé et nettoyé !")
         st.dataframe(df_dav.head())
+
 # ==============================
 # 4️⃣ Préparation des variables
 # ==============================
