@@ -70,7 +70,15 @@ df_dav["Date"] = pd.to_datetime(df_dav["Date"], errors="coerce")
 
 # Supprimer les lignes où la date est invalide
 df_dav = df_dav.dropna(subset=["Date"]).reset_index(drop=True)
+# Nettoyage des noms de colonnes : enlever espaces, mettre en minuscules
+df_dav.columns = df_dav.columns.str.strip().str.lower()
 
+# Vérifier que la colonne 'date' existe
+if 'date' not in df_dav.columns:
+    st.error("Votre fichier doit contenir une colonne 'Date'")
+else:
+    df_dav['date'] = pd.to_datetime(df_dav['date'], errors='coerce')
+    df_dav = df_dav.dropna(subset=['date']).reset_index(drop=True)
 
 # ==============================
 # 4️⃣ Préparation des variables
