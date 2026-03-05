@@ -64,7 +64,7 @@ if file is not None:
         df_dav = pd.read_csv(file)
     else:
         df_dav = pd.read_excel(file)
-    df_dav["Date"] = pd.to_datetime(df_dav["Date"])
+   df_dav["Date"] = pd.to_datetime(df_dav["Date"], format="%d/%m/%Y", errors="coerce")
     st.dataframe(df_dav.head())
 
 # ==============================
