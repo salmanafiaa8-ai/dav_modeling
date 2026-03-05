@@ -39,8 +39,10 @@ page = st.sidebar.radio("Choisir la section :", [
     "6️⃣ Visualisation"
 ])
 
+
+
 # ==============================
-# Fonction récupération TMP BAM
+# Fonction pour récupérer TMP BAM
 # ==============================
 def get_tmp_bam(start, end):
     url = "https://www.bkam.ma/fr/Marches/Principaux-indicateurs/Marche-monetaire/Marche-monetaire-interbancaire"
@@ -49,30 +51,43 @@ def get_tmp_bam(start, end):
         soup = BeautifulSoup(response.text, "lxml")
         table = soup.find("table")
         df = pd.read_html(str(table))[0]
+
+        # Nettoyage des données
         df["Date"] = pd.to_datetime(df["Date"], dayfirst=True)
         df["Taux Moyen Pondéré"] = df["Taux Moyen Pondéré"].str.replace("%","").str.replace(",",".").astype(float)
         df = df[(df["Date"] >= pd.to_datetime(start)) & (df["Date"] <= pd.to_datetime(end))]
+
+        # TMP agrégé par mois
         df_monthly = df.groupby(df["Date"].dt.to_period("M"))["Taux Moyen Pondéré"].mean().reset_index()
         df_monthly["Date"] = df_monthly["Date"].dt.to_timestamp()
-        return df_monthly
+
+        return df, df_monthly
     except Exception as e:
         st.error("Impossible de récupérer le TMP BAM.")
         st.error(str(e))
-        return None
+        return None, None
 
 # ==============================
 # 1️⃣ TMP BAM
 # ==============================
-if page == "1️⃣ TMP BAM":
-    with st.expander("📥 Récupération du TMP BAM"):
-        start_date = st.date_input("Date de début TMP", value=pd.to_datetime("2020-01-01"))
-        end_date = st.date_input("Date de fin TMP", value=pd.to_datetime("2023-12-31"))
-        if st.button("Télécharger TMP BAM"):
-            tmp_df = get_tmp_bam(start_date, end_date)
-            if tmp_df is not None:
-                st.success("✅ TMP BAM téléchargé et agrégé par mois !")
-                st.dataframe(tmp_df.head())
-            st.session_state.tmp_df = tmp_df
+st.header("1️⃣ TMP BAM")
+start_date = st.date_input("Date de début TMP", value=pd.to_datetime("2020-01-01"))
+end_date = st.date_input("Date de fin TMP", value=pd.to_datetime("2023-12-31"))
+
+if st.button("Télécharger TMP BAM"):
+    tmp_df, tmp_monthly_df = get_tmp_bam(start_date, end_date)
+    if tmp_df is not None and tmp_monthly_df is not None:
+        st.success("✅ TMP BAM téléchargé !")
+
+        st.subheader("TMP journalier")
+        st.dataframe(tmp_df)  # Affiche le TMP jour par jour
+
+        st.subheader("TMP agrégé par mois")
+        st.dataframe(tmp_monthly_df)  # Affiche le TMP par mois
+
+        # Sauvegarder dans session_state pour réutilisation
+        st.session_state.tmp_df = tmp_df
+        st.session_state.tmp_monthly_df = tmp_monthly_df
 
 # ==============================
 # 2️⃣ Import DAV
