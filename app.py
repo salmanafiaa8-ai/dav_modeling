@@ -43,8 +43,8 @@ st.markdown(
 primary_color = "#0055A4"  # bleu
 secondary_color = "#C8102E"  # rouge
 
-st.markdown(f"<h1 style='color:{primary_color}; text-align:center'>📊 Plateforme ALM - Modélisation DAV</h1>", unsafe_allow_html=True)
-st.markdown(f"<h4 style='color:{secondary_color}; text-align:center'>CIH Bank - Département ALM</h4>", unsafe_allow_html=True)
+st.markdown(f"<h1 style='color:{primary_color}; text-align:center'>  Modélisation DAV</h1>", unsafe_allow_html=True)
+st.markdown(f"<h4 style='color:{secondary_color}; text-align:center'>CIH Bank</h4>", unsafe_allow_html=True)
 
 # ==============================
 # Sidebar Navigation
