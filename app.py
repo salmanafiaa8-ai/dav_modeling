@@ -5,6 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 import statsmodels.api as sm
 import plotly.express as px
+import plotly.graph_objects as go
 
 # ==============================
 # Page config
@@ -12,43 +13,22 @@ import plotly.express as px
 st.set_page_config(page_title="Plateforme ALM DAV", layout="wide")
 
 # ==============================
-# Logo en background
+# Branding couleurs CIH
 # ==============================
-st.markdown(
-    """
-    <style>
-    /* Background principal avec le logo */
-    .stApp {
-        background-image: url("cih_logo.jpg");  /* ton logo JPG ici */
-        background-size: 60% auto;              /* ajuste la taille */
-        background-repeat: no-repeat;
-        background-position: center top;        /* position du logo */
-        background-attachment: fixed;
-        background-color: #ffffff;              /* couleur derrière le logo */
-    }
-
-    /* Optionnel : ajout d'une légère zone semi-transparente derrière le contenu pour lisibilité */
-    .css-18e3th9 {  /* classe du container principal */
-        background-color: rgba(255,255,255,0.8);  
-        border-radius: 10px;
-        padding: 10px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-# ==============================
-# Couleurs branding
-# ==============================
-primary_color = "#0055A4"  # bleu
-secondary_color = "#C8102E"  # rouge
-
-st.markdown(f"<h1 style='color:{primary_color}; text-align:center'>  Modélisation DAV</h1>", unsafe_allow_html=True)
-st.markdown(f"<h4 style='color:{secondary_color}; text-align:center'>CIH Bank</h4>", unsafe_allow_html=True)
+primary_color = "#0055A4"  # Bleu CIH
+secondary_color = "#C8102E"  # Rouge CIH
 
 # ==============================
-# Sidebar Navigation
+# Header avec logo
 # ==============================
+st.image("cih_logo.jpg", width=200)  # Logo en haut
+st.markdown(f"<h1 style='color:{primary_color}; text-align:center'>📊 Plateforme ALM - Modélisation DAV</h1>", unsafe_allow_html=True)
+st.markdown(f"<h4 style='color:{secondary_color}; text-align:center'>CIH Bank - Département ALM</h4>", unsafe_allow_html=True)
+
+# ==============================
+# Sidebar avec logo et navigation
+# ==============================
+st.sidebar.image("cih_logo.jpg", width=150)
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Choisir la section :", [
     "1️⃣ TMP BAM",
@@ -60,7 +40,7 @@ page = st.sidebar.radio("Choisir la section :", [
 ])
 
 # ==============================
-# Fonction utilitaire pour TMP BAM
+# Fonction récupération TMP BAM
 # ==============================
 def get_tmp_bam(start, end):
     url = "https://www.bkam.ma/fr/Marches/Principaux-indicateurs/Marche-monetaire/Marche-monetaire-interbancaire"
@@ -196,10 +176,24 @@ if page == "5️⃣ Comparaison":
         })
         st.header("📊 Comparaison des modèles")
         st.dataframe(comparison)
-        fig = px.bar(comparison, x="Model", y=["R2","AIC"], barmode="group", title="R2 et AIC des modèles")
+        # Graphique Plotly avec logo en fond
+        fig = go.Figure()
+        fig.add_trace(go.Bar(x=comparison["Model"], y=comparison["R2"], name="R2", marker_color=primary_color))
+        fig.add_trace(go.Bar(x=comparison["Model"], y=comparison["AIC"], name="AIC", marker_color=secondary_color))
+        fig.update_layout(
+            title="R2 et AIC des modèles",
+            barmode="group",
+            images=[dict(
+                source="cih_logo.jpg",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5,
+                sizex=0.3, sizey=0.3,
+                xanchor="center", yanchor="middle",
+                opacity=0.15,
+                layer="below"
+            )]
+        )
         st.plotly_chart(fig)
-        best_model = comparison.loc[comparison["AIC"].idxmin()]["Model"]
-        st.success(f"🏆 Meilleur modèle selon AIC : {best_model}")
 
 # ==============================
 # 6️⃣ Visualisation
@@ -212,8 +206,21 @@ if page == "6️⃣ Visualisation":
         options = df.columns.tolist()
         selected_vars = st.multiselect("Variables à afficher", options, default=["dk","Rk"] if dav_type=="Compte courant / Chèque" else ["dk","Rk","ik"])
         if selected_vars:
-            fig = px.line(df, x="Date", y=selected_vars, title="Évolution des variables")
+            fig = go.Figure()
+            for col in selected_vars:
+                fig.add_trace(go.Scatter(x=df["Date"], y=df[col], mode="lines", name=col))
+            # Ajouter logo en fond
+            fig.update_layout(images=[dict(
+                source="cih_logo.jpg",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5,
+                sizex=0.4, sizey=0.4,
+                xanchor="center", yanchor="middle",
+                opacity=0.15,
+                layer="below"
+            )])
             st.plotly_chart(fig)
 
+        # Télécharger les données préparées
         csv = df.to_csv(index=False).encode('utf-8')
         st.download_button("💾 Télécharger les données préparées", data=csv, file_name='DAV_model_data.csv', mime='text/csv')
