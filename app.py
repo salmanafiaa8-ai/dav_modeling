@@ -22,8 +22,8 @@ secondary_color = "#C8102E"  # Rouge CIH
 # Header avec logo
 # ==============================
 st.image("cih_logo.jpg", width=200)  # Logo en haut
-st.markdown(f"<h1 style='color:{primary_color}; text-align:center'>📊 Plateforme ALM - Modélisation DAV</h1>", unsafe_allow_html=True)
-st.markdown(f"<h4 style='color:{secondary_color}; text-align:center'>CIH Bank - Département ALM</h4>", unsafe_allow_html=True)
+st.markdown(f"<h1 style='color:{primary_color}; text-align:center'> Plateforme  - Modélisation DAV</h1>", unsafe_allow_html=True)
+st.markdown(f"<h4 style='color:{secondary_color}; text-align:center'>CIH Bank - ALM</h4>", unsafe_allow_html=True)
 
 # ==============================
 # Sidebar avec logo et navigation
