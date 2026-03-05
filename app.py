@@ -38,9 +38,6 @@ page = st.sidebar.radio("Choisir la section :", [
     "5️⃣ Comparaison",
     "6️⃣ Visualisation"
 ])
-
-
-
 # ==============================
 # Fonction pour récupérer TMP BAM
 # ==============================
@@ -51,60 +48,64 @@ from bs4 import BeautifulSoup
 
 st.header("1️⃣ TMP BAM")
 
+# Sélection des dates
 start_date = st.date_input("Date de début TMP", value=pd.to_datetime("2020-01-01"))
 end_date = st.date_input("Date de fin TMP", value=pd.to_datetime("2023-12-31"))
 
+# Fonction pour récupérer TMP BAM
 def get_tmp_bam(start, end):
     url = "https://www.bkam.ma/fr/Marches/Principaux-indicateurs/Marche-monetaire/Marche-monetaire-interbancaire"
     try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()  # vérifie que le site a répondu
-
-        soup = BeautifulSoup(response.text, "lxml")
-        table = soup.find("table")
-        if table is None:
-            st.error("⚠️ La table TMP n'a pas été trouvée sur le site de la BAM.")
-            return None, None
-
-        df = pd.read_html(str(table))[0]
-
-        # Vérification des colonnes
-        if "Date" not in df.columns or "Taux Moyen Pondéré" not in df.columns:
-            st.error("⚠️ Les colonnes attendues ne sont pas présentes dans le tableau.")
-            return None, None
-
-        # Nettoyage des données
-        df["Date"] = pd.to_datetime(df["Date"], dayfirst=True, errors='coerce')
-        df["Taux Moyen Pondéré"] = df["Taux Moyen Pondéré"].astype(str).str.replace("%","").str.replace(",",".")
-        df["Taux Moyen Pondéré"] = pd.to_numeric(df["Taux Moyen Pondéré"], errors='coerce')
-
-        df = df.dropna(subset=["Date","Taux Moyen Pondéré"])
-        df = df[(df["Date"] >= pd.to_datetime(start)) & (df["Date"] <= pd.to_datetime(end))]
-
-        if df.empty:
-            st.warning("⚠️ Aucun TMP trouvé pour la période sélectionnée.")
-            return None, None
-
-        # TMP agrégé par mois
-        df_monthly = df.groupby(df["Date"].dt.to_period("M"))["Taux Moyen Pondéré"].mean().reset_index()
-        df_monthly["Date"] = df_monthly["Date"].dt.to_timestamp()
-
-        return df, df_monthly
-
+        # Lecture directe des tableaux avec pandas
+        tables = pd.read_html(url)
+        df = tables[0]  # Premier tableau
     except Exception as e:
-        st.error("Impossible de récupérer le TMP BAM.")
+        st.error("⚠️ Impossible de récupérer le TMP BAM depuis le site de la BAM.")
         st.error(str(e))
         return None, None
 
-if st.button("Télécharger TMP BAM"):
+    # Nettoyage des colonnes attendues
+    expected_cols = ["Date", "Taux Moyen Pondéré"]
+    if not all(col in df.columns for col in expected_cols):
+        st.error("⚠️ Les colonnes attendues ne sont pas présentes dans le tableau.")
+        return None, None
+
+    # Nettoyage des données
+    df["Date"] = pd.to_datetime(df["Date"], dayfirst=True, errors='coerce').dt.normalize()
+    df["Taux Moyen Pondéré"] = pd.to_numeric(
+        df["Taux Moyen Pondéré"].astype(str).str.replace("%","").str.replace(",",".", regex=False),
+        errors='coerce'
+    )
+    df = df.dropna(subset=["Date","Taux Moyen Pondéré"])
+
+    # Filtrage par période
+    df = df[(df["Date"] >= pd.to_datetime(start)) & (df["Date"] <= pd.to_datetime(end))]
+    if df.empty:
+        st.warning("⚠️ Aucun TMP trouvé pour la période sélectionnée.")
+        return None, None
+
+    # TMP agrégé par mois
+    df_monthly = df.groupby(df["Date"].dt.to_period("M"))["Taux Moyen Pondéré"].mean().reset_index()
+    df_monthly["Date"] = df_monthly["Date"].dt.to_timestamp()
+
+    return df, df_monthly
+
+# Bouton de téléchargement
+if st.button("📥 Télécharger TMP BAM"):
     tmp_df, tmp_monthly_df = get_tmp_bam(start_date, end_date)
-
+    
     if tmp_df is not None and tmp_monthly_df is not None:
-        st.success("✅ TMP BAM téléchargé !")
+        # Stockage dans session_state pour les autres pages
+        st.session_state.tmp_df = tmp_df
+        st.session_state.tmp_monthly_df = tmp_monthly_df
 
+        st.success("✅ TMP BAM téléchargé !")
+        
+        # Affichage TMP journalier
         st.subheader("TMP journalier")
         st.dataframe(tmp_df)
-
+        
+        # Affichage TMP agrégé par mois
         st.subheader("TMP agrégé par mois")
         st.dataframe(tmp_monthly_df)
 # ==============================
