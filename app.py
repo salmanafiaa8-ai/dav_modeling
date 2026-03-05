@@ -53,6 +53,9 @@ st.write(f"Vous avez choisi : {dav_type}")
 # ==============================
 # 3️⃣ Importer données DAV
 # ==============================
+# ==============================
+# 3️⃣ Importer données DAV
+# ==============================
 st.header("3️⃣ Importer vos données DAV")
 st.write("Le fichier doit contenir : Date | Dk" + (" | ik (taux rémunération)" if dav_type=="Compte épargne" else ""))
 
@@ -60,26 +63,27 @@ file = st.file_uploader("Uploader fichier Excel ou CSV", type=["csv","xlsx"])
 df_dav = None
 
 if file is not None:
+    # Lecture du fichier
     if file.name.endswith(".csv"):
         df_dav = pd.read_csv(file)
     else:
         df_dav = pd.read_excel(file)
-     
-# Convertir en datetime et remplacer les erreurs par NaT
-df_dav["Date"] = pd.to_datetime(df_dav["Date"], errors="coerce")
 
-# Supprimer les lignes où la date est invalide
-df_dav = df_dav.dropna(subset=["Date"]).reset_index(drop=True)
-# Nettoyage des noms de colonnes : enlever espaces, mettre en minuscules
-df_dav.columns = df_dav.columns.str.strip().str.lower()
+    # 1️⃣ Nettoyage des noms de colonnes : enlever espaces et mettre en minuscules
+    df_dav.columns = df_dav.columns.str.strip().str.lower()
 
-# Vérifier que la colonne 'date' existe
-if 'date' not in df_dav.columns:
-    st.error("Votre fichier doit contenir une colonne 'Date'")
-else:
-    df_dav['date'] = pd.to_datetime(df_dav['date'], errors='coerce')
-    df_dav = df_dav.dropna(subset=['date']).reset_index(drop=True)
+    # 2️⃣ Vérifier la présence de la colonne date
+    if 'date' not in df_dav.columns:
+        st.error("Votre fichier doit contenir une colonne 'Date'")
+    else:
+        # 3️⃣ Conversion en datetime avec gestion des erreurs
+        df_dav['date'] = pd.to_datetime(df_dav['date'], errors='coerce')
 
+        # 4️⃣ Supprimer les lignes où la date est invalide
+        df_dav = df_dav.dropna(subset=['date']).reset_index(drop=True)
+
+        # 5️⃣ Afficher les 5 premières lignes
+        st.dataframe(df_dav.head())
 # ==============================
 # 4️⃣ Préparation des variables
 # ==============================
