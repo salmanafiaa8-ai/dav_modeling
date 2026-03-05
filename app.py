@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 # Configuration page
 # ==============================
 st.set_page_config(page_title="Plateforme ALM DAV", layout="wide")
-st.title("📊 Plateforme ALM - Modélisation des Dépôts à Vue (DAV)")
+st.title(" Plateforme - Modélisation des Dépôts à Vue (DAV)")
 
 # ==============================
 # Sidebar navigation
