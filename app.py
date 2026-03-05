@@ -17,17 +17,26 @@ st.set_page_config(page_title="Plateforme ALM DAV", layout="wide")
 st.markdown(
     """
     <style>
-    .stApp {
-        background: url("cih_logo.jpg") no-repeat center top;
-        background-size: 400px 400px;
-        background-attachment: fixed;
-        opacity: 0.1;  /* rend le logo très discret */
+    /* Crée un pseudo-background avec le logo */
+    .stApp::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("cih_logo.jpg");  /* ton JPG ici */
+        background-size: 400px 400px;           /* taille du logo */
+        background-repeat: no-repeat;
+        background-position: center top;        /* position du logo */
+        opacity: 0.1;                           /* rend le logo discret */
+        z-index: -1;                            /* derrière tout le contenu */
+        pointer-events: none;                   /* le logo ne gêne pas les clics */
     }
     </style>
     """,
     unsafe_allow_html=True
 )
-
 # ==============================
 # Couleurs branding
 # ==============================
