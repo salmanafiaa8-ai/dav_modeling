@@ -64,13 +64,13 @@ if file is not None:
         df_dav = pd.read_csv(file)
     else:
         df_dav = pd.read_excel(file)
-        
+     st.dataframe(df_dav.head())
 # Convertir en datetime et remplacer les erreurs par NaT
 df_dav["Date"] = pd.to_datetime(df_dav["Date"], errors="coerce")
 
 # Supprimer les lignes où la date est invalide
 df_dav = df_dav.dropna(subset=["Date"]).reset_index(drop=True)
-        st.dataframe(df_dav.head())
+
 
 # ==============================
 # 4️⃣ Préparation des variables
