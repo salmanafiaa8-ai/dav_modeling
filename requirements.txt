@@ -8,3 +8,4 @@ statsmodels
 matplotlib
 openpyxl
  plotly
+streamlit-aggrid
