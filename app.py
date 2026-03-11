@@ -9,9 +9,6 @@ import plotly.graph_objects as go
 # ==============================
 st.set_page_config(page_title="Plateforme ALM DAV", layout="wide")
 
-# ==============================
-# Branding couleurs CIH
-# ==============================
 primary_color = "#0055A4"
 secondary_color = "#C8102E"
 
@@ -47,6 +44,23 @@ page = st.sidebar.radio(
 )
 
 # ==============================
+# Fonction nettoyage régression
+# ==============================
+def clean_regression_data(X, y):
+
+    data = pd.concat([y, X], axis=1)
+
+    data = data.replace([np.inf, -np.inf], np.nan)
+
+    data = data.dropna()
+
+    y_clean = data.iloc[:, 0]
+    X_clean = data.iloc[:, 1:]
+
+    return X_clean, y_clean
+
+
+# ==============================
 # 1️⃣ Import données
 # ==============================
 if page == "1️⃣ Import données":
@@ -76,21 +90,17 @@ if page == "1️⃣ Import données":
 
             df.columns = df.columns.str.strip().str.lower()
 
-            # Vérification colonnes
             required_cols = ["date", "dk", "rk"]
 
-            missing = [col for col in required_cols if col not in df.columns]
+            missing = [c for c in required_cols if c not in df.columns]
 
             if missing:
                 st.error(f"Colonnes manquantes : {missing}")
                 st.stop()
 
-            # Conversion date robuste
             df["date"] = pd.to_datetime(df["date"], errors="coerce")
-
             df = df.dropna(subset=["date"])
 
-            # Nettoyage dk
             df["dk"] = (
                 df["dk"]
                 .astype(str)
@@ -100,10 +110,8 @@ if page == "1️⃣ Import données":
 
             df["dk"] = pd.to_numeric(df["dk"], errors="coerce")
 
-            # Nettoyage rk
             df["rk"] = pd.to_numeric(df["rk"], errors="coerce")
 
-            # Nettoyage ik si existe
             if "ik" in df.columns:
                 df["ik"] = pd.to_numeric(df["ik"], errors="coerce")
 
@@ -114,6 +122,7 @@ if page == "1️⃣ Import données":
             st.dataframe(df.head())
 
             st.session_state.df_raw = df
+
 
 # ==============================
 # 2️⃣ Préparation
@@ -152,6 +161,7 @@ if page == "2️⃣ Préparation":
 
         st.session_state.df = df
 
+
 # ==============================
 # 3️⃣ Estimation
 # ==============================
@@ -159,7 +169,7 @@ if page == "3️⃣ Estimation":
 
     if "df" in st.session_state:
 
-        df = st.session_state.df
+        df = st.session_state.df.copy()
         dav_type = st.session_state.dav_type
 
         st.header("Estimation des modèles")
@@ -174,35 +184,59 @@ if page == "3️⃣ Estimation":
 
             results = {}
 
+            # Selvaggio
             if "Selvaggio" in models:
+
                 X = sm.add_constant(df[["logDk_lag", "Rk", "trend"]])
                 y = df["logDk"]
+
+                X, y = clean_regression_data(X, y)
+
                 results["Selvaggio"] = sm.OLS(y, X).fit()
 
+            # Dupre
             if "Dupre" in models:
-                df["delta_logD"] = df["logDk_lag"] - df["logDk"]
-                X = sm.add_constant(df["Rk"])
+
+                df["delta_logD"] = df["logDk"] - df["logDk_lag"]
+
+                X = sm.add_constant(df[["Rk"]])
                 y = df["delta_logD"]
+
+                X, y = clean_regression_data(X, y)
+
                 results["Dupre"] = sm.OLS(y, X).fit()
 
+            # JVD
             if "Jarrow-Van Deventer" in models:
+
                 X = sm.add_constant(df[["logDk_lag", "Rk", "dRk", "trend"]])
                 y = df["logDk"]
+
+                X, y = clean_regression_data(X, y)
+
                 results["JVD"] = sm.OLS(y, X).fit()
 
+            # OBrien
             if "OBrien" in models and dav_type == "Compte épargne":
+
                 if "spread" in df.columns:
+
                     X = sm.add_constant(df[["logDk_lag", "spread", "trend"]])
                     y = df["logDk"]
+
+                    X, y = clean_regression_data(X, y)
+
                     results["OBrien"] = sm.OLS(y, X).fit()
 
+            # OTS
             if "OTS" in models:
 
                 df["dk_lag"] = df["dk"].shift(1)
-                ots_df = df.dropna(subset=["dk", "dk_lag"])
 
-                X = sm.add_constant(ots_df["dk_lag"])
-                y = ots_df["dk"]
+                X = sm.add_constant(df[["dk_lag"]])
+                y = df["dk"]
+
+                X, y = clean_regression_data(X, y)
 
                 results["OTS"] = sm.OLS(y, X).fit()
 
@@ -210,12 +244,19 @@ if page == "3️⃣ Estimation":
 
             st.success("Estimation terminée")
 
+            for name, model in results.items():
+
+                st.subheader(name)
+
+                st.text(model.summary())
+
+
 # ==============================
 # 4️⃣ Comparaison
 # ==============================
 if page == "4️⃣ Comparaison":
 
-    if "results" in st.session_state:
+    if "results" in st.session_state and len(st.session_state.results) > 0:
 
         results = st.session_state.results
 
@@ -252,6 +293,7 @@ if page == "4️⃣ Comparaison":
 
         st.plotly_chart(fig)
 
+
 # ==============================
 # 5️⃣ Visualisation
 # ==============================
@@ -279,6 +321,7 @@ if page == "5️⃣ Visualisation":
             fig = go.Figure()
 
             for col in selected:
+
                 fig.add_trace(
                     go.Scatter(
                         x=df["date"],
