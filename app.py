@@ -83,7 +83,14 @@ if page == "1️⃣ Import données":
                 if col not in df.columns:
                     st.error(f"❌ La colonne {col} est obligatoire")
 
-            df["date"] = pd.to_datetime(df["date"], dayfirst=True)
+           # Conversion date robuste
+             df["date"] = pd.to_datetime(
+             df["date"],
+             errors="coerce"
+                                              )
+
+             # supprimer lignes avec date invalide
+            df = df.dropna(subset=["date"])
 
             df["dk"] = (
             df["dk"]
