@@ -21,13 +21,13 @@ secondary_color = "#C8102E"
 st.image("cih_logo.jpg", width=200)
 
 st.markdown(
-f"<h1 style='color:{primary_color}; text-align:center'>Plateforme - Modélisation DAV</h1>",
-unsafe_allow_html=True
+    f"<h1 style='color:{primary_color}; text-align:center'>Plateforme - Modélisation DAV</h1>",
+    unsafe_allow_html=True
 )
 
 st.markdown(
-f"<h4 style='color:{secondary_color}; text-align:center'>CIH Bank - ALM</h4>",
-unsafe_allow_html=True
+    f"<h4 style='color:{secondary_color}; text-align:center'>CIH Bank - ALM</h4>",
+    unsafe_allow_html=True
 )
 
 # ==============================
@@ -36,14 +36,14 @@ unsafe_allow_html=True
 st.sidebar.image("cih_logo.jpg", width=150)
 
 page = st.sidebar.radio(
-"Navigation",
-[
-"1️⃣ Import données",
-"2️⃣ Préparation",
-"3️⃣ Estimation",
-"4️⃣ Comparaison",
-"5️⃣ Visualisation"
-]
+    "Navigation",
+    [
+        "1️⃣ Import données",
+        "2️⃣ Préparation",
+        "3️⃣ Estimation",
+        "4️⃣ Comparaison",
+        "5️⃣ Visualisation"
+    ]
 )
 
 # ==============================
@@ -56,15 +56,15 @@ if page == "1️⃣ Import données":
     with st.expander("Uploader les données DAV"):
 
         dav_type = st.radio(
-        "Type de dépôt",
-        ["Compte courant / Chèque","Compte épargne"]
+            "Type de dépôt",
+            ["Compte courant / Chèque", "Compte épargne"]
         )
 
         st.session_state.dav_type = dav_type
 
         file = st.file_uploader(
-        "Uploader fichier CSV ou Excel",
-        type=["csv","xlsx"]
+            "Uploader fichier CSV ou Excel",
+            type=["csv", "xlsx"]
         )
 
         if file is not None:
@@ -77,33 +77,37 @@ if page == "1️⃣ Import données":
             df.columns = df.columns.str.strip().str.lower()
 
             # Vérification colonnes
-            required_cols = ["date","dk","rk"]
+            required_cols = ["date", "dk", "rk"]
 
-            for col in required_cols:
-                if col not in df.columns:
-                    st.error(f"❌ La colonne {col} est obligatoire")
+            missing = [col for col in required_cols if col not in df.columns]
 
-           # Conversion date robuste
-             df["date"] = pd.to_datetime(
-             df["date"],
-             errors="coerce"
-                                              )
+            if missing:
+                st.error(f"Colonnes manquantes : {missing}")
+                st.stop()
 
-             # supprimer lignes avec date invalide
+            # Conversion date robuste
+            df["date"] = pd.to_datetime(df["date"], errors="coerce")
+
             df = df.dropna(subset=["date"])
 
+            # Nettoyage dk
             df["dk"] = (
-            df["dk"]
-            .astype(str)
-            .str.replace(" ","")
-            .str.replace(",",".")
-            .astype(float)
+                df["dk"]
+                .astype(str)
+                .str.replace(" ", "")
+                .str.replace(",", ".")
             )
 
+            df["dk"] = pd.to_numeric(df["dk"], errors="coerce")
+
+            # Nettoyage rk
             df["rk"] = pd.to_numeric(df["rk"], errors="coerce")
 
+            # Nettoyage ik si existe
             if "ik" in df.columns:
                 df["ik"] = pd.to_numeric(df["ik"], errors="coerce")
+
+            df = df.dropna(subset=["dk", "rk"])
 
             st.success("Données importées avec succès")
 
@@ -161,9 +165,9 @@ if page == "3️⃣ Estimation":
         st.header("Estimation des modèles")
 
         models = st.multiselect(
-        "Choisir les modèles",
-        ["Selvaggio","Dupre","Jarrow-Van Deventer","OBrien","OTS"],
-        default=["Selvaggio","Dupre"]
+            "Choisir les modèles",
+            ["Selvaggio", "Dupre", "Jarrow-Van Deventer", "OBrien", "OTS"],
+            default=["Selvaggio", "Dupre"]
         )
 
         if st.button("Lancer estimation"):
@@ -171,41 +175,36 @@ if page == "3️⃣ Estimation":
             results = {}
 
             if "Selvaggio" in models:
-
-                X = sm.add_constant(df[["logDk_lag","Rk","trend"]])
+                X = sm.add_constant(df[["logDk_lag", "Rk", "trend"]])
                 y = df["logDk"]
-
-                results["Selvaggio"] = sm.OLS(y,X).fit()
+                results["Selvaggio"] = sm.OLS(y, X).fit()
 
             if "Dupre" in models:
-
                 df["delta_logD"] = df["logDk_lag"] - df["logDk"]
-
                 X = sm.add_constant(df["Rk"])
                 y = df["delta_logD"]
-
-                results["Dupre"] = sm.OLS(y,X).fit()
+                results["Dupre"] = sm.OLS(y, X).fit()
 
             if "Jarrow-Van Deventer" in models:
-
-                X = sm.add_constant(df[["logDk_lag","Rk","dRk","trend"]])
+                X = sm.add_constant(df[["logDk_lag", "Rk", "dRk", "trend"]])
                 y = df["logDk"]
-
-                results["JVD"] = sm.OLS(y,X).fit()
+                results["JVD"] = sm.OLS(y, X).fit()
 
             if "OBrien" in models and dav_type == "Compte épargne":
-
-                X = sm.add_constant(df[["logDk_lag","spread","trend"]])
-                y = df["logDk"]
-
-                results["OBrien"] = sm.OLS(y,X).fit()
+                if "spread" in df.columns:
+                    X = sm.add_constant(df[["logDk_lag", "spread", "trend"]])
+                    y = df["logDk"]
+                    results["OBrien"] = sm.OLS(y, X).fit()
 
             if "OTS" in models:
 
-                X = sm.add_constant(df["dk"].shift(1))
-                y = df["dk"]
+                df["dk_lag"] = df["dk"].shift(1)
+                ots_df = df.dropna(subset=["dk", "dk_lag"])
 
-                results["OTS"] = sm.OLS(y.dropna(),X.dropna()).fit()
+                X = sm.add_constant(ots_df["dk_lag"])
+                y = ots_df["dk"]
+
+                results["OTS"] = sm.OLS(y, X).fit()
 
             st.session_state.results = results
 
@@ -221,13 +220,9 @@ if page == "4️⃣ Comparaison":
         results = st.session_state.results
 
         comparison = pd.DataFrame({
-
-        "Model":[k for k in results],
-
-        "R2":[m.rsquared for m in results.values()],
-
-        "AIC":[m.aic for m in results.values()]
-
+            "Model": list(results.keys()),
+            "R2": [m.rsquared for m in results.values()],
+            "AIC": [m.aic for m in results.values()]
         })
 
         st.header("Comparaison des modèles")
@@ -237,22 +232,22 @@ if page == "4️⃣ Comparaison":
         fig = go.Figure()
 
         fig.add_bar(
-        x=comparison["Model"],
-        y=comparison["R2"],
-        name="R2",
-        marker_color=primary_color
+            x=comparison["Model"],
+            y=comparison["R2"],
+            name="R2",
+            marker_color=primary_color
         )
 
         fig.add_bar(
-        x=comparison["Model"],
-        y=comparison["AIC"],
-        name="AIC",
-        marker_color=secondary_color
+            x=comparison["Model"],
+            y=comparison["AIC"],
+            name="AIC",
+            marker_color=secondary_color
         )
 
         fig.update_layout(
-        title="Comparaison modèles",
-        barmode="group"
+            title="Comparaison modèles",
+            barmode="group"
         )
 
         st.plotly_chart(fig)
@@ -271,12 +266,12 @@ if page == "5️⃣ Visualisation":
 
         options = df.columns.tolist()
 
-        default_vars = ["dk","Rk"] if dav_type=="Compte courant / Chèque" else ["dk","Rk","ik"]
+        default_vars = ["dk", "Rk"] if dav_type == "Compte courant / Chèque" else ["dk", "Rk", "ik"]
 
         selected = st.multiselect(
-        "Variables à afficher",
-        options,
-        default=default_vars
+            "Variables à afficher",
+            options,
+            default=default_vars
         )
 
         if selected:
@@ -284,14 +279,13 @@ if page == "5️⃣ Visualisation":
             fig = go.Figure()
 
             for col in selected:
-
                 fig.add_trace(
-                go.Scatter(
-                x=df["date"],
-                y=df[col],
-                mode="lines",
-                name=col
-                )
+                    go.Scatter(
+                        x=df["date"],
+                        y=df[col],
+                        mode="lines",
+                        name=col
+                    )
                 )
 
             st.plotly_chart(fig)
@@ -299,8 +293,8 @@ if page == "5️⃣ Visualisation":
         csv = df.to_csv(index=False).encode("utf-8")
 
         st.download_button(
-        "Télécharger les données préparées",
-        data=csv,
-        file_name="DAV_model_data.csv",
-        mime="text/csv"
+            "Télécharger les données préparées",
+            data=csv,
+            file_name="DAV_model_data.csv",
+            mime="text/csv"
         )
