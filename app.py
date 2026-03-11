@@ -1,137 +1,276 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import time
-from st_aggrid import AgGrid, GridOptionsBuilder
+import statsmodels.api as sm
 import plotly.graph_objects as go
-from datetime import datetime
 
 # ==============================
 # Page config
 # ==============================
-st.set_page_config(page_title="Plateforme ALM DAV - Live", layout="wide", page_icon="💰")
+st.set_page_config(page_title="Plateforme ALM DAV", layout="wide")
 
 primary_color = "#0055A4"
 secondary_color = "#C8102E"
-bg_color = "#1e1e1e"
-text_color = "#ffffff"
 
 # ==============================
 # Header
 # ==============================
+st.image("cih_logo.jpg", width=200)
+
 st.markdown(
-    f"<h1 style='color:{primary_color}; text-align:center;'>Plateforme ALM DAV - LIVE</h1>",
+    f"<h1 style='color:{primary_color}; text-align:center'>Plateforme - Modélisation DAV</h1>",
     unsafe_allow_html=True
 )
+
 st.markdown(
-    f"<h4 style='color:{secondary_color}; text-align:center;'>CIH Bank - ALM Dashboard</h4>",
+    f"<h4 style='color:{secondary_color}; text-align:center'>CIH Bank - ALM</h4>",
     unsafe_allow_html=True
 )
 
 # ==============================
-# Sidebar : filtrage
+# Sidebar
 # ==============================
-st.sidebar.header("Filtres")
-dav_type = st.sidebar.radio("Type de dépôt", ["Compte courant / Chèque", "Compte épargne"])
-update_interval = st.sidebar.slider("Intervalle de mise à jour (s)", 1, 10, 5)
+st.sidebar.image("cih_logo.jpg", width=150)
 
-# ==============================
-# Génération / chargement de données simulées
-# ==============================
-@st.cache_data
-def generate_initial_data(rows=30):
-    dates = pd.date_range(end=datetime.today(), periods=rows, freq='D')
-    df = pd.DataFrame({
-        "Date": dates,
-        "DK": np.random.randint(1000, 2000, size=rows),
-        "Rk": np.random.uniform(1.0, 3.0, size=rows)
-    })
-    if dav_type == "Compte épargne":
-        df["ik"] = np.random.uniform(0.5, 2.5, size=rows)
-        df["Spread"] = df["Rk"] - df["ik"]
-    return df
-
-df = generate_initial_data()
-
-# ==============================
-# Section KPIs
-# ==============================
-st.subheader("📊 KPIs")
-kpi1, kpi2, kpi3 = st.columns(3)
-
-kpi1.metric("Total DK", f"{df['DK'].sum():,.0f}")
-kpi2.metric("Taux moyen Rk", f"{df['Rk'].mean():.2f}%")
-if dav_type == "Compte épargne":
-    kpi3.metric("Spread moyen", f"{df['Spread'].mean():.2f}%")
-else:
-    kpi3.metric("Spread moyen", "-")
-
-# ==============================
-# Tableau interactif AgGrid
-# ==============================
-st.subheader("📈 Tableau interactif")
-gb = GridOptionsBuilder.from_dataframe(df)
-gb.configure_pagination(paginationAutoPageSize=True)
-gb.configure_side_bar()
-gb.configure_default_column(editable=False, groupable=True)
-gridOptions = gb.build()
-AgGrid(df, gridOptions=gridOptions, theme="dark", height=300, fit_columns_on_grid_load=True)
-
-# ==============================
-# Graphiques dynamiques Plotly
-# ==============================
-st.subheader("📉 Graphiques dynamiques")
-
-fig = go.Figure()
-fig.add_trace(go.Scatter(x=df["Date"], y=df["DK"], mode="lines+markers", name="DK", line=dict(color="#00ffcc")))
-fig.add_trace(go.Scatter(x=df["Date"], y=df["Rk"], mode="lines+markers", name="Rk", line=dict(color="#ff9900")))
-if dav_type == "Compte épargne":
-    fig.add_trace(go.Scatter(x=df["Date"], y=df["Spread"], mode="lines+markers", name="Spread", line=dict(color="#ff3366")))
-
-fig.update_layout(
-    template="plotly_dark",
-    xaxis_title="Date",
-    yaxis_title="Valeur",
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-    height=400
+page = st.sidebar.radio(
+    "Navigation",
+    [
+        "1️⃣ Import données",
+        "2️⃣ Préparation",
+        "3️⃣ Estimation",
+        "4️⃣ Comparaison",
+        "5️⃣ Visualisation"
+    ]
 )
-st.plotly_chart(fig, use_container_width=True)
 
 # ==============================
-# Live update simulation
+# Nettoyage régression
 # ==============================
-st.subheader("🔄 Live update simulation")
-placeholder = st.empty()
+def clean_regression_data(X, y):
+    data = pd.concat([y, X], axis=1)
+    data = data.apply(pd.to_numeric, errors="coerce")
+    data = data.replace([np.inf, -np.inf], np.nan)
+    data = data.dropna()
+    y_clean = data.iloc[:, 0]
+    X_clean = data.iloc[:, 1:]
+    return X_clean, y_clean
 
-for _ in range(5):  # tu peux mettre while True pour réel live
-    # Nouvelle ligne simulée
-    new_row = {
-        "Date": datetime.now(),
-        "DK": np.random.randint(1000, 2000),
-        "Rk": np.random.uniform(1.0, 3.0)
-    }
-    if dav_type == "Compte épargne":
-        new_row["ik"] = np.random.uniform(0.5, 2.5)
-        new_row["Spread"] = new_row["Rk"] - new_row["ik"]
-    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-    
-    # Mettre à jour KPIs
-    kpi1.metric("Total DK", f"{df['DK'].sum():,.0f}")
-    kpi2.metric("Taux moyen Rk", f"{df['Rk'].mean():.2f}%")
-    if dav_type == "Compte épargne":
-        kpi3.metric("Spread moyen", f"{df['Spread'].mean():.2f}%")
-    
-    # Mettre à jour tableau
-    AgGrid(df.tail(10), gridOptions=gridOptions, theme="dark", height=300, fit_columns_on_grid_load=True)
-    
-    # Mettre à jour graphique
-    fig.data[0].y = df["DK"]
-    fig.data[0].x = df["Date"]
-    fig.data[1].y = df["Rk"]
-    fig.data[1].x = df["Date"]
-    if dav_type == "Compte épargne":
-        fig.data[2].y = df["Spread"]
-        fig.data[2].x = df["Date"]
-    placeholder.plotly_chart(fig, use_container_width=True)
-    
-    time.sleep(update_interval)
+# ==============================
+# 1️⃣ Import données
+# ==============================
+if page == "1️⃣ Import données":
+    st.header("Import des données")
+
+    with st.expander("Uploader les données DAV"):
+        dav_type = st.radio(
+            "Type de dépôt",
+            ["Compte courant / Chèque", "Compte épargne"]
+        )
+        st.session_state.dav_type = dav_type
+
+        file = st.file_uploader(
+            "Uploader fichier CSV ou Excel",
+            type=["csv", "xlsx"]
+        )
+
+        if file is not None:
+            if file.name.endswith(".csv"):
+                df = pd.read_csv(file)
+            else:
+                df = pd.read_excel(file)
+
+            df.columns = df.columns.str.strip().str.lower()
+            required_cols = ["date", "dk", "rk"]
+            missing = [c for c in required_cols if c not in df.columns]
+
+            if missing:
+                st.error(f"Colonnes manquantes : {missing}")
+                st.stop()
+
+            df["date"] = pd.to_datetime(df["date"], errors="coerce")
+            df = df.dropna(subset=["date"])
+
+            df["dk"] = (
+                df["dk"]
+                .astype(str)
+                .str.replace(" ", "")
+                .str.replace(",", ".")
+            )
+            df["dk"] = pd.to_numeric(df["dk"], errors="coerce")
+            df["rk"] = pd.to_numeric(df["rk"], errors="coerce")
+
+            if "ik" in df.columns:
+                df["ik"] = pd.to_numeric(df["ik"], errors="coerce")
+
+            df = df.dropna(subset=["dk", "rk"])
+
+            st.success("Données importées avec succès")
+            st.dataframe(df.head())
+            st.session_state.df_raw = df
+
+# ==============================
+# 2️⃣ Préparation
+# ==============================
+if page == "2️⃣ Préparation":
+    if "df_raw" in st.session_state:
+        df = st.session_state.df_raw.copy()
+        dav_type = st.session_state.dav_type
+
+        st.header("Préparation des variables")
+
+        df = df.sort_values("date").reset_index(drop=True)
+        df = df[df["dk"] > 0]  # éviter log(0)
+
+        df["logDk"] = np.log(df["dk"])
+        df["logDk_lag"] = df["logDk"].shift(1)
+        df["Rk"] = df["rk"]
+        df["Rk_lag"] = df["Rk"].shift(1)
+        df["dRk"] = df["Rk"] - df["Rk_lag"]
+        df["trend"] = np.arange(len(df))
+
+        if dav_type == "Compte épargne" and "ik" in df.columns:
+            df["spread"] = df["Rk"] - df["ik"]
+
+        df = df.replace([np.inf, -np.inf], np.nan)
+        df = df.dropna()
+
+        st.success("Variables préparées")
+        st.dataframe(df.head())
+        st.session_state.df = df
+
+# ==============================
+# 3️⃣ Estimation
+# ==============================
+if page == "3️⃣ Estimation":
+    if "df" in st.session_state:
+        df = st.session_state.df.copy()
+        dav_type = st.session_state.dav_type
+
+        st.header("Estimation des modèles")
+
+        models = st.multiselect(
+            "Choisir les modèles",
+            ["Selvaggio", "Dupre", "Jarrow-Van Deventer", "OBrien", "OTS"],
+            default=["Selvaggio", "Dupre"]
+        )
+
+        if st.button("Lancer estimation"):
+            results = {}
+
+            # Selvaggio
+            if "Selvaggio" in models:
+                X = sm.add_constant(df[["logDk_lag", "Rk", "trend"]])
+                y = df["logDk"]
+                X, y = clean_regression_data(X, y)
+                if len(X) > 5:
+                    results["Selvaggio"] = sm.OLS(y, X).fit()
+
+            # Dupre
+            if "Dupre" in models:
+                df["delta_logD"] = df["logDk"] - df["logDk_lag"]
+                X = sm.add_constant(df[["Rk"]])
+                y = df["delta_logD"]
+                X, y = clean_regression_data(X, y)
+                if len(X) > 5:
+                    results["Dupre"] = sm.OLS(y, X).fit()
+
+            # JVD
+            if "Jarrow-Van Deventer" in models:
+                X = sm.add_constant(df[["logDk_lag", "Rk", "dRk", "trend"]])
+                y = df["logDk"]
+                X, y = clean_regression_data(X, y)
+                if len(X) > 5:
+                    results["JVD"] = sm.OLS(y, X).fit()
+
+            # OBrien
+            if "OBrien" in models and dav_type == "Compte épargne":
+                if "spread" in df.columns:
+                    X = sm.add_constant(df[["logDk_lag", "spread", "trend"]])
+                    y = df["logDk"]
+                    X, y = clean_regression_data(X, y)
+                    if len(X) > 5:
+                        results["OBrien"] = sm.OLS(y, X).fit()
+
+            # OTS
+            if "OTS" in models:
+                df["dk_lag"] = df["dk"].shift(1)
+                X = sm.add_constant(df[["dk_lag"]])
+                y = df["dk"]
+                X, y = clean_regression_data(X, y)
+                if len(X) > 5:
+                    results["OTS"] = sm.OLS(y, X).fit()
+
+            st.session_state.results = results
+
+            if len(results) == 0:
+                st.warning("Aucun modèle n'a pu être estimé. Vérifiez vos données.")
+            else:
+                st.success("Estimation terminée")
+                for name, model in results.items():
+                    st.subheader(name)
+                    st.text(model.summary())
+
+# ==============================
+# 4️⃣ Comparaison
+# ==============================
+if page == "4️⃣ Comparaison":
+    if "results" in st.session_state:
+        results = st.session_state.results
+        if len(results) == 0:
+            st.warning("Aucun modèle valide n'a été estimé. Vérifiez vos données.")
+        else:
+            st.write("Modèles valides :", list(results.keys()))
+            comparison = pd.DataFrame({
+                "Model": list(results.keys()),
+                "R2": [m.rsquared for m in results.values()],
+                "AIC": [m.aic for m in results.values()]
+            })
+            st.header("Comparaison des modèles")
+            st.dataframe(comparison)
+
+            fig = go.Figure()
+            fig.add_bar(
+                x=comparison["Model"],
+                y=comparison["R2"],
+                name="R2",
+                marker_color=primary_color
+            )
+            fig.add_bar(
+                x=comparison["Model"],
+                y=comparison["AIC"],
+                name="AIC",
+                marker_color=secondary_color
+            )
+            fig.update_layout(title="Comparaison modèles", barmode="group")
+            st.plotly_chart(fig)
+
+# ==============================
+# 5️⃣ Visualisation
+# ==============================
+if page == "5️⃣ Visualisation":
+    if "df" in st.session_state:
+        df = st.session_state.df
+        dav_type = st.session_state.dav_type
+
+        st.header("Visualisation des séries")
+
+        options = df.columns.tolist()
+        default_vars = ["dk", "Rk"] if dav_type == "Compte courant / Chèque" else ["dk", "Rk", "ik"]
+
+        selected = st.multiselect("Variables à afficher", options, default=default_vars)
+
+        if selected:
+            fig = go.Figure()
+            for col in selected:
+                fig.add_trace(
+                    go.Scatter(x=df["date"], y=df[col], mode="lines", name=col)
+                )
+            st.plotly_chart(fig)
+
+        csv = df.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            "Télécharger les données préparées",
+            data=csv,
+            file_name="DAV_model_data.csv",
+            mime="text/csv"
+        )
