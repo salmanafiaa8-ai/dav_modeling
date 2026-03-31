@@ -351,13 +351,13 @@ st.markdown("""
 if df_raw is None:
     st.markdown("""
     <div class="info-box">
-      ⬅️ Chargez votre dataset dans la barre latérale pour commencer.
+       Chargez votre dataset dans la barre latérale pour commencer.
     </div>
     """, unsafe_allow_html=True)
     st.stop()
 
 # ─── Entraîner le modèle ─────────────────────────────────────────
-with st.spinner("🔄 Entraînement du modèle en cours..."):
+with st.spinner(" Entraînement du modèle en cours..."):
     # On cache en fonction des paramètres
     @st.cache_resource
     def get_model(df_hash, c, ts):
@@ -395,11 +395,11 @@ m = bundle['metrics']
 # TABS
 # ─────────────────────────────────────────────────────────────────
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📊 Vue d'ensemble",
-    "📈 Performance",
-    "🔍 Interprétation",
-    "🔮 Prédiction Client",
-    "📋 Données"
+    " Vue d'ensemble",
+    " Performance",
+    " Interprétation",
+    " Prédiction Client",
+    " Données"
 ])
 
 
@@ -407,7 +407,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 # TAB 1 — VUE D'ENSEMBLE
 # ══════════════════════════════════════════════════════════════════
 with tab1:
-    st.markdown('<div class="section-title">📊 Métriques Clés du Modèle</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title"> Métriques Clés du Modèle</div>', unsafe_allow_html=True)
 
     col1, col2, col3, col4, col5 = st.columns(5)
     cards = [
@@ -430,7 +430,7 @@ with tab1:
     col_a, col_b, col_c = st.columns(3)
 
     with col_a:
-        st.markdown('<div class="section-title">📦 Dataset</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title"> Dataset</div>', unsafe_allow_html=True)
         n_rachat = int(df_raw['Y'].sum())
         n_total  = len(df_raw)
         st.markdown(f"""
@@ -453,7 +453,7 @@ with tab1:
         """, unsafe_allow_html=True)
 
     with col_b:
-        st.markdown('<div class="section-title">🔄 Cross-Validation (5-Fold)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title"> Cross-Validation (5-Fold)</div>', unsafe_allow_html=True)
         st.markdown(f"""
         <div class="metric-card" style="text-align:left">
           <div style="margin-bottom:0.7rem">
@@ -471,7 +471,7 @@ with tab1:
         """, unsafe_allow_html=True)
 
     with col_c:
-        st.markdown('<div class="section-title">📐 Calibration</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title"> Calibration</div>', unsafe_allow_html=True)
         st.markdown(f"""
         <div class="metric-card" style="text-align:left">
           <div style="margin-bottom:0.7rem">
@@ -488,7 +488,7 @@ with tab1:
 
     # Distribution des probabilités
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<div class="section-title">📉 Distribution des Probabilités Prédites</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title"> Distribution des Probabilités Prédites</div>', unsafe_allow_html=True)
 
     fig_dist, ax_dist = plt.subplots(figsize=(12, 3.5))
     fig_dist.patch.set_facecolor('#161b22')
@@ -514,7 +514,7 @@ with tab2:
 
     # ROC curve
     with col_roc:
-        st.markdown('<div class="section-title">📈 Courbe ROC</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title"> Courbe ROC</div>', unsafe_allow_html=True)
         fig_roc, ax_roc = plt.subplots(figsize=(6, 4.5))
         fig_roc.patch.set_facecolor('#161b22'); ax_roc.set_facecolor('#161b22')
         fpr, tpr, _ = roc_curve(bundle['y_test'], bundle['y_proba'])
@@ -530,7 +530,7 @@ with tab2:
 
     # Confusion matrix
     with col_cm:
-        st.markdown('<div class="section-title">🔢 Matrice de Confusion</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title"> Matrice de Confusion</div>', unsafe_allow_html=True)
         y_pred_thresh = (bundle['y_proba'] >= threshold).astype(int)
         cm = confusion_matrix(bundle['y_test'], y_pred_thresh)
         fig_cm, ax_cm = plt.subplots(figsize=(5, 4.5))
@@ -551,7 +551,7 @@ with tab2:
     col_pr, col_cal = st.columns(2)
 
     with col_pr:
-        st.markdown('<div class="section-title">🎯 Courbe Précision-Rappel</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title"> Courbe Précision-Rappel</div>', unsafe_allow_html=True)
         fig_pr, ax_pr = plt.subplots(figsize=(5.5, 3.5))
         fig_pr.patch.set_facecolor('#161b22'); ax_pr.set_facecolor('#161b22')
         prec_c, rec_c, _ = precision_recall_curve(bundle['y_test'], bundle['y_proba'])
@@ -566,7 +566,7 @@ with tab2:
         fig_pr.tight_layout(); st.pyplot(fig_pr); plt.close(fig_pr)
 
     with col_cal:
-        st.markdown('<div class="section-title">📐 Courbe de Calibration</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title"> Courbe de Calibration</div>', unsafe_allow_html=True)
         fig_cal, ax_cal = plt.subplots(figsize=(5.5, 3.5))
         fig_cal.patch.set_facecolor('#161b22'); ax_cal.set_facecolor('#161b22')
         frac_pos, mean_pred = calibration_curve(bundle['y_test'], bundle['y_proba'], n_bins=10)
@@ -582,7 +582,7 @@ with tab2:
 
     # Rapport textuel
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<div class="section-title">📄 Rapport de Classification</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title"> Rapport de Classification</div>', unsafe_allow_html=True)
     report_str = classification_report(
         bundle['y_test'], y_pred_thresh,
         target_names=['Pas de rachat (0)', 'Rachat anticipé (1)']
@@ -600,7 +600,7 @@ with tab3:
     col_coef, col_or = st.columns(2)
 
     with col_coef:
-        st.markdown('<div class="section-title">📊 Coefficients β (standardisés)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title"> Coefficients β (standardisés)</div>', unsafe_allow_html=True)
         fig_coef, ax_coef = plt.subplots(figsize=(6, 7))
         fig_coef.patch.set_facecolor('#161b22'); ax_coef.set_facecolor('#161b22')
         coef_sorted = coef_s.sort_values()
@@ -614,7 +614,7 @@ with tab3:
         fig_coef.tight_layout(); st.pyplot(fig_coef); plt.close(fig_coef)
 
     with col_or:
-        st.markdown('<div class="section-title">🎲 Odds Ratios (e^β)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title"> Odds Ratios (e^β)</div>', unsafe_allow_html=True)
         top_or = odds_r.sort_values(ascending=False).head(15).sort_values()
         fig_or, ax_or = plt.subplots(figsize=(6, 7))
         fig_or.patch.set_facecolor('#161b22'); ax_or.set_facecolor('#161b22')
@@ -629,7 +629,7 @@ with tab3:
 
     # Tableau détaillé
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<div class="section-title">📋 Tableau Complet des Coefficients</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title"> Tableau Complet des Coefficients</div>', unsafe_allow_html=True)
     coef_df = pd.DataFrame({
         'Variable':        coef_s.index,
         'Coefficient β':   coef_s.values.round(4),
@@ -643,7 +643,7 @@ with tab3:
 # TAB 4 — PRÉDICTION NOUVEAU CLIENT
 # ══════════════════════════════════════════════════════════════════
 with tab4:
-    st.markdown('<div class="section-title">🔮 Évaluer un Nouveau Client</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title"> Évaluer un Nouveau Client</div>', unsafe_allow_html=True)
     st.markdown("""
     <div class="info-box">
       Renseignez les caractéristiques du client. Le modèle estimera immédiatement
@@ -676,7 +676,7 @@ with tab4:
         with d3:
             anciennete    = st.number_input("Ancienneté client (années)", 0, 30, 5)
 
-        submitted = st.form_submit_button("🔮 Estimer la probabilité de rachat", use_container_width=True)
+        submitted = st.form_submit_button(" Estimer la probabilité de rachat", use_container_width=True)
 
     if submitted:
         client = {
@@ -726,7 +726,7 @@ with tab4:
             """, unsafe_allow_html=True)
 
         with col_detail:
-            st.markdown('<div class="section-title">📊 Variables Dérivées</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title"> Variables Dérivées</div>', unsafe_allow_html=True)
             diff = taux_credit - taux_marche
             eco  = diff * crd
 
@@ -782,7 +782,7 @@ with tab5:
 
     # Scores du portefeuille
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<div class="section-title">🎯 Scores du Jeu de Test</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title"> Scores du Jeu de Test</div>', unsafe_allow_html=True)
 
     scores_df = bundle['X_test'].copy()
     scores_df['Y_réel']   = bundle['y_test'].values
