@@ -306,7 +306,7 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="section-title">📂 Données</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title"> Données</div>', unsafe_allow_html=True)
     data_source = st.radio("Source des données", ["Utiliser le dataset fourni", "Uploader mon CSV"], label_visibility="collapsed")
 
     df_raw = None
@@ -762,7 +762,7 @@ with tab4:
 # TAB 5 — DONNÉES
 # ══════════════════════════════════════════════════════════════════
 with tab5:
-    st.markdown('<div class="section-title">📋 Aperçu du Dataset</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title"> Aperçu du Dataset</div>', unsafe_allow_html=True)
 
     col_f1, col_f2, col_f3 = st.columns(3)
     with col_f1:
@@ -777,7 +777,7 @@ with tab5:
         df_raw['Type_credit'].isin(filter_type) &
         df_raw['Type_taux'].isin(filter_taux)
     ]
-    st.markdown(f"<div class='info-box'>🔎 {len(df_filtered):,} clients affichés sur {len(df_raw):,}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='info-box'> {len(df_filtered):,} clients affichés sur {len(df_raw):,}</div>", unsafe_allow_html=True)
     st.dataframe(df_filtered, use_container_width=True, height=400)
 
     # Scores du portefeuille
@@ -800,7 +800,7 @@ with tab5:
     csv_buf = io.StringIO()
     scores_df.to_csv(csv_buf, index=False)
     st.download_button(
-        "⬇️ Télécharger les scores (CSV)",
+        " Télécharger les scores (CSV)",
         data=csv_buf.getvalue(),
         file_name="scores_rachat_anticipe.csv",
         mime="text/csv"
