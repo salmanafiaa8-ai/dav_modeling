@@ -66,7 +66,7 @@ st.markdown(f"""
     background-repeat: no-repeat;
     background-position: center center;
     background-size: 70vw;
-    opacity: 0.06;
+    opacity: 0.12;
     pointer-events: none;
     z-index: 0;
   }}
