@@ -35,7 +35,74 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+# ==========================================
+# SIDEBAR PREMIUM - LARGE VERSION
+# À placer dans ton bloc CSS global
+# juste après st.set_page_config()
+# ==========================================
 
+st.markdown("""
+<style>
+
+/* Largeur de la sidebar */
+section[data-testid="stSidebar"] {
+    width: 420px !important;
+    min-width: 420px !important;
+    max-width: 420px !important;
+    background: linear-gradient(180deg, #0d1117 0%, #161b22 100%);
+    border-right: 1px solid #30363d;
+    box-shadow: 8px 0 30px rgba(0, 0, 0, 0.35);
+}
+
+/* Contenu interne */
+section[data-testid="stSidebar"] > div {
+    width: 420px !important;
+    padding: 2rem 1.5rem;
+}
+
+/* Titres */
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3 {
+    color: #f0f6fc;
+    font-weight: 700;
+}
+
+/* Labels */
+section[data-testid="stSidebar"] label {
+    color: #c9d1d9 !important;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Inputs */
+section[data-testid="stSidebar"] .stNumberInput,
+section[data-testid="stSidebar"] .stSelectbox,
+section[data-testid="stSidebar"] .stDateInput,
+section[data-testid="stSidebar"] .stTextInput {
+    margin-bottom: 1rem;
+}
+
+/* Boutons */
+section[data-testid="stSidebar"] .stButton > button {
+    width: 100%;
+    height: 55px;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #1f6feb, #388bfd);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+section[data-testid="stSidebar"] .stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(31, 111, 235, 0.4);
+}
+
+</style>
+""", unsafe_allow_html=True)
 # ─────────────────────────────────────────────────────────────────
 # LOGO CIH BANK EN BASE64 (intégré directement — aucun fichier externe requis)
 # ─────────────────────────────────────────────────────────────────
